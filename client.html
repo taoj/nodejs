@@ -148,22 +148,19 @@
 				document.getElementById("btn_Cancel").disabled = true;
 				document.getElementById("qBoard").style.visibility = "hidden";
 				document.getElementById("recordBoard").style.visibility = "hidden";
-
-				socket.disconnect();
+				socket.emit('disconn');
 				reconn = true;
 			}
 			function onJoin()
 			{
 				if(reconn)
 				{
-					socket.socket.reconnect();
+					socket.socket.connect();
 				}else
 				{
 					socket = io.connect('http://localhost');
+					regisCalls();
 				}
-				
-
-				regisCalls();
 
 				document.getElementById("btn_Join").disabled = true;
 				document.getElementById("btn_Cancel").disabled = false;

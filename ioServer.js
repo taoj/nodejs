@@ -62,8 +62,6 @@ var io = require('socket.io').listen(server);
 io.sockets.on('connection', function(socket)
 {
 	
-	var address = socket.handshake.address.address;
-	
 	socket.on('turnIn', function(data)
 	{
 		if(parseInt(data.index) < bag.index)
@@ -109,9 +107,9 @@ io.sockets.on('connection', function(socket)
 			
 			
 		});
-	socket.on('disconnect', function()
+	socket.on('disconn', function()
 		{
-			socket.emit('disconnected');
+			socket.disconnect();
 		});
 
 //test util event
