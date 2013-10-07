@@ -1,0 +1,198 @@
+<html>
+	<head>
+	</head>
+	<body>
+		<div>
+			<div style="background-color:#FFA500">
+			
+				<h1 id="title" align="center">Welcome</h1>
+				
+			</div>
+			<div >
+			
+				<div style="float:left; width:30%" >
+					<label id="unameBoard"></label><br>
+					User name: <input type="text" id="uname" style="width:50%"><br><br>
+					<button id="btn_Join" style="width:100" onclick="onJoin()">Join</button><br><br><br><br>
+					<button id="btn_Cancel" style="width:100" onclick="onCancel()" disabled="true">Cancel</button><br>
+				</div>
+
+				<div id="qBoard" style="float:left; width:40%; visibility:hidden">
+					<br>
+					<label> question:</label><br>
+					<label id="questionBoard" ></label><br><br>
+						Answer:<input type="text" id="myAnswer"><br><br><br>
+			
+					<button id="TurnIn" onclick="onTurnInAnswer()" >Turn In</button>&nbsp;&nbsp;&nbsp;&nbsp;
+					<button id="NextQuestion" onclick="onNextOne()" disabled="ture">Next</button>
+				</div>
+				<div id="recordBoard" style="visibility:hidden">
+					<label >Record</label>
+					<div id="recordList">
+				
+					</div>
+				</div>
+				
+			</div>
+			
+		</div>
+		
+		
+		<script src="/socket.io/socket.io.js"></script>
+	
+		<script>
+			var tmp = 1;
+			var reconn = false;
+			var socket; 
+
+			var questionIndex;
+
+			var pSolved = function(data)
+			{
+				document.getElementById("TurnIn").disabled = true;
+				document.getElementById("NextQuestion").disabled=false;
+	
+				var cur = parseInt(document.getElementById("num_"+data.user).innerHTML);
+				document.getElementById("num_"+data.user).innerHTML=++cur;
+			}
+
+
+			var regisCalls = function()
+			{
+			socket.on('question',function(data)
+				{
+					document.getElementById("questionBoard").innerHTML=data.question;
+					questionIndex = parseInt(data.index);
+				});
+			socket.on('result', function(data)
+				{
+					if(!data.result)//wrong 
+					{
+						document.getElementById("title").innerHTML="wrong";	
+					}
+					else
+					{
+						pSolved(data);
+						document.getElementById("title").innerHTML="correct";
+					}
+					
+				});
+			
+
+			socket.on('solved', function(data)
+			{
+				pSolved(data);
+
+				document.getElementById('title').innerHTML="Problem has been solved by: "+ data.user;
+			});
+			
+			socket.on('ulist', function(data)
+			{
+				var recTable="<table id=\"recordTable\" style=\"width:15%\">";
+				for (var key in data)
+				{
+					if(data.hasOwnProperty(key))
+					{
+						recTable += "<tr>";
+						recTable += "<td>"+ key + "</td>";
+						recTable += "<td id=\"num_"+key+"\">"+data[key]+"</td>";
+						recTable += "</tr>";
+					}
+				}
+				recTable +="</table>";
+				
+
+				document.getElementById("recordList").innerHTML=recTable;
+			});
+			
+			socket.on('newUser', function(data)
+			{
+				var table = document.getElementById("recordTable");
+				var row = table.insertRow(-1);
+				var cell1 = row.insertCell(0);
+				var cell2 = row.insertCell(1);
+				cell1.innerHTML = data;
+				cell2.innerHTML = 0;
+			});
+			
+			socket.on('outDated', function()
+			{
+				document.getElementById('title').innerHTML="hit next to update question";
+				document.getElementById("NextQuestion").disabled=true;
+			});
+			
+			socket.on('disconnected', function()
+			{
+				document.getElementById("btn_Join").disabled = false;
+				document.getElementById("btn_Cancel").disabled = true;
+				document.getElementById("qBoard").style.visibility = "hidden";
+				document.getElementById("recordBoard").style.visibility = "hidden";
+
+			});
+
+			}
+
+
+			function onTurnInAnswer()
+			{
+				
+				var ans = document.getElementById("myAnswer").value;
+				var user=document.getElementById('unameBoard').innerHTML;
+				
+				socket.emit('turnIn',{answer: ans, uname: user, index: questionIndex});
+			}
+			
+			function onCancel()
+			{
+				document.getElementById("btn_Join").disabled = false;
+				document.getElementById("btn_Cancel").disabled = true;
+				document.getElementById("qBoard").style.visibility = "hidden";
+				document.getElementById("recordBoard").style.visibility = "hidden";
+
+				socket.disconnect();
+				reconn = true;
+			}
+			function onJoin()
+			{
+				if(reconn)
+				{
+					socket.socket.reconnect();
+				}else
+				{
+					socket = io.connect('http://localhost');
+				}
+				
+
+				regisCalls();
+
+				document.getElementById("btn_Join").disabled = true;
+				document.getElementById("btn_Cancel").disabled = false;
+				document.getElementById("qBoard").style.visibility = "visible";
+				document.getElementById("recordBoard").style.visibility = "visible";
+				document.getElementById("TurnIn").disabled = false;
+				document.getElementById("NextQuestion").disabled=true;
+
+
+
+				var uname=document.getElementById("uname").value;
+				if(uname.length == 0)
+				{
+					alert("user name can not be empty");
+					return;
+				}
+				document.getElementById('unameBoard').innerHTML=uname;
+				socket.emit('join', uname);
+			}
+			function onNextOne()
+			{
+				document.getElementById("TurnIn").disabled = false;
+				document.getElementById("NextQuestion").disabled=true;
+				socket.emit('nextQuestion');
+				document.getElementById("myAnswer").value="";
+				document.getElementById('title').innerHTML="Welcome";
+			}
+			
+		</script>
+	</body>
+
+</html>
