@@ -75,6 +75,7 @@ io.sockets.on('connection', function(socket)
 			//broadcast
 			socket.broadcast.emit('solved',{user:data.uname});
 			socket.emit("result", {result:true, user:data.uname});
+			bag.solved = true;
 			makeQuestion(bag);
 		}
 		else
@@ -90,7 +91,7 @@ io.sockets.on('connection', function(socket)
 			{
 				record[data] = 0;
 			}
-			if(bag.index == 0)
+			if(bag.index == 0 || bag.solved == true)
 			{
 				makeQuestion(bag);
 			}
@@ -102,7 +103,11 @@ io.sockets.on('connection', function(socket)
 
 	socket.on('nextQuestion', function()
 		{
-			makeQuestion(bag);
+			if(bag.solved)
+			{
+				makeQuestion(bag);
+			}
+			
 			socket.emit('question', {question:bag.question, index:bag.index});
 			
 			
