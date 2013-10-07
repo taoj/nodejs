@@ -114,7 +114,7 @@ io.sockets.on('connection', function(socket)
 			socket.emit('disconnected');
 		});
 
-//test utitl event
+//test util event
 	socket.on('sov',function(){
 			console.log("Tom");			
 			socket.broadcast.emit('newUser',"Tom");});
