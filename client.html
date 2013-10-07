@@ -14,7 +14,7 @@
 					<label id="unameBoard"></label><br>
 					User name: <input type="text" id="uname" style="width:50%"><br><br>
 					<button id="btn_Join" style="width:100" onclick="onJoin()">Join</button><br><br><br><br>
-					<button id="btn_Cancel" style="width:100" onclick="onCancel()" disabled="true">Cancel</button><br>
+					<button id="btn_Cancel" style="width:100" onclick="onCancel()">Cancel</button><br>
 				</div>
 
 				<div id="qBoard" style="float:left; width:40%; visibility:hidden">
@@ -46,6 +46,9 @@
 			var socket; 
 
 			var questionIndex;
+			
+			document.getElementById("btn_Join").disabled = false;
+			document.getElementById("btn_Cancel").disabled = true;
 
 			var pSolved = function(data)
 			{

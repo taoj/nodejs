@@ -111,7 +111,6 @@ io.sockets.on('connection', function(socket)
 		{
 			socket.disconnect();
 		});
-
 //test util event
 	socket.on('sov',function(){
 			console.log("Tom");			
