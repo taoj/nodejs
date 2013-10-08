@@ -35,8 +35,7 @@
 				
 			</div>
 			
-		</div>
-		
+		</div>	
 		
 		<script src="/socket.io/socket.io.js"></script>
 	
@@ -50,6 +49,12 @@
 			document.getElementById("btn_Join").disabled = false;
 			document.getElementById("btn_Cancel").disabled = true;
 
+			var dodebug = function(data)
+			{
+				document.getElementById("debug").innerHTML = data;
+
+			}
+
 			var pSolved = function(data)
 			{
 				document.getElementById("TurnIn").disabled = true;
@@ -62,12 +67,12 @@
 
 			var regisCalls = function()
 			{
-			socket.on('question',function(data)
+				socket.on('question',function(data)
 				{
 					document.getElementById("questionBoard").innerHTML=data.question;
 					questionIndex = parseInt(data.index);
 				});
-			socket.on('result', function(data)
+				socket.on('result', function(data)
 				{
 					if(!data.result)//wrong 
 					{
@@ -82,56 +87,71 @@
 				});
 			
 
-			socket.on('solved', function(data)
-			{
-				pSolved(data);
-
-				document.getElementById('title').innerHTML="Problem has been solved by: "+ data.user;
-			});
-			
-			socket.on('ulist', function(data)
-			{
-				var recTable="<table id=\"recordTable\" style=\"width:15%\">";
-				for (var key in data)
+				socket.on('solved', function(data)
 				{
-					if(data.hasOwnProperty(key))
+					pSolved(data);
+
+					document.getElementById('title').innerHTML="Problem has been solved by: "+ data.user;
+				});
+			
+				socket.on('ulist', function(data)
+				{
+					var recTable="<table id=\"recordTable\" style=\"width:15%\">";
+					for (var key in data)
 					{
-						recTable += "<tr>";
-						recTable += "<td>"+ key + "</td>";
-						recTable += "<td id=\"num_"+key+"\">"+data[key]+"</td>";
-						recTable += "</tr>";
+						if(data.hasOwnProperty(key))
+						{
+							recTable += "<tr>";
+							recTable += "<td>"+ key + "</td>";
+							recTable += "<td id=\"num_"+key+"\">"+data[key].score+"</td>";
+							recTable += "</tr>";
+						}
 					}
-				}
-				recTable +="</table>";
+					recTable +="</table>";
 				
 
-				document.getElementById("recordList").innerHTML=recTable;
-			});
+					document.getElementById("recordList").innerHTML=recTable;
+				});
 			
-			socket.on('newUser', function(data)
-			{
-				var table = document.getElementById("recordTable");
-				var row = table.insertRow(-1);
-				var cell1 = row.insertCell(0);
-				var cell2 = row.insertCell(1);
-				cell1.innerHTML = data;
-				cell2.innerHTML = 0;
-			});
+				socket.on('newUser', function(data)
+				{
+					var table = document.getElementById("recordTable");
+					var row = table.insertRow(-1);
+					var cell1 = row.insertCell(0);
+					var cell2 = row.insertCell(1);
+					cell2.setAttribute("id", "num_"+data);
+					cell1.innerHTML = data;
+					cell2.innerHTML = 0;
+				});
 			
-			socket.on('outDated', function()
-			{
-				document.getElementById('title').innerHTML="hit next to update question";
-				document.getElementById("NextQuestion").disabled=true;
-			});
+				socket.on('outDated', function()
+				{
+					document.getElementById('title').innerHTML="hit next to update question";
+					document.getElementById("NextQuestion").disabled=true;
+				});
 			
-			socket.on('disconnected', function()
-			{
-				document.getElementById("btn_Join").disabled = false;
-				document.getElementById("btn_Cancel").disabled = true;
-				document.getElementById("qBoard").style.visibility = "hidden";
-				document.getElementById("recordBoard").style.visibility = "hidden";
+				socket.on('disconnected', function()
+				{
+					document.getElementById("btn_Join").disabled = false;
+					document.getElementById("btn_Cancel").disabled = true;
+					document.getElementById("qBoard").style.visibility = "hidden";
+					document.getElementById("recordBoard").style.visibility = "hidden";
 
-			});
+				});
+				socket.on('alreadyLogin', function(){
+					alert("user already exists!");
+					socket.disconnect();
+					reconn = true;
+				});
+				
+				socket.on('validUser', function(){
+					document.getElementById("btn_Join").disabled = true;
+					document.getElementById("btn_Cancel").disabled = false;
+					document.getElementById("qBoard").style.visibility = "visible";
+					document.getElementById("recordBoard").style.visibility = "visible";
+					document.getElementById("TurnIn").disabled = false;
+					document.getElementById("NextQuestion").disabled=true;
+				});
 
 			}
 
@@ -141,7 +161,6 @@
 				
 				var ans = document.getElementById("myAnswer").value;
 				var user=document.getElementById('unameBoard').innerHTML;
-				
 				socket.emit('turnIn',{answer: ans, uname: user, index: questionIndex});
 			}
 			
@@ -151,37 +170,38 @@
 				document.getElementById("btn_Cancel").disabled = true;
 				document.getElementById("qBoard").style.visibility = "hidden";
 				document.getElementById("recordBoard").style.visibility = "hidden";
-				socket.emit('disconn');
+				var user=document.getElementById('unameBoard').innerHTML;
+				socket.emit('disconn', user);
 				reconn = true;
 			}
 			function onJoin()
 			{
-				if(reconn)
-				{
-					socket.socket.connect();
-				}else
-				{
-					socket = io.connect('taoj-nodejs.jit.su');
-					regisCalls();
-				}
-
-				document.getElementById("btn_Join").disabled = true;
-				document.getElementById("btn_Cancel").disabled = false;
-				document.getElementById("qBoard").style.visibility = "visible";
-				document.getElementById("recordBoard").style.visibility = "visible";
-				document.getElementById("TurnIn").disabled = false;
-				document.getElementById("NextQuestion").disabled=true;
-
-
+				
 
 				var uname=document.getElementById("uname").value;
 				if(uname.length == 0)
 				{
+
 					alert("user name can not be empty");
 					return;
 				}
+				if(reconn)
+				{
+
+					socket.socket.connect();
+				}else
+				{
+
+					socket = io.connect('taoj-nodejs.jit.su');
+					regisCalls();
+				}
+				
+				
 				document.getElementById('unameBoard').innerHTML=uname;
 				socket.emit('join', uname);
+				
+				document.getElementById('tmp').innerHTML = ++tmp;
+				
 			}
 			function onNextOne()
 			{

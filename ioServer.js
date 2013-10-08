@@ -5,6 +5,7 @@ var index = 0;
 var path = require('path');
 
 var record = new Object();
+var map = new Object();
 
 var bag = new Object();
 bag.index = 0;
@@ -71,7 +72,7 @@ io.sockets.on('connection', function(socket)
 				
 		if(parseInt(data.answer) == bag.result)
 		{
-			record[data.uname]++;
+			record[data.uname].score++;
 			//broadcast
 			socket.broadcast.emit('solved',{user:data.uname});
 			socket.emit("result", {result:true, user:data.uname});
@@ -89,16 +90,31 @@ io.sockets.on('connection', function(socket)
 		{
 			if(record[data] == undefined)
 			{
-				record[data] = 0;
+				socket.emit("validUser");
+				record[data] = new Object();
+				record[data].score = 0;
+				record[data].onLine = true;
+				map[data] = socket.id;
+				socket.broadcast.emit('newUser', data);
+			}
+			else if(record[data].onLine)
+			{	
+				socket.emit("alreadyLogin");
+				return;
+			}
+			else
+			{
+				map[data] = socket.id;
+				record[data].onLine = true;
+				socket.emit("validUser");
 			}
 			if(bag.index == 0 || bag.solved == true)
 			{
 				makeQuestion(bag);
 			}
-			
 			socket.emit('question', {question:bag.question, index:bag.index});
 			socket.emit('ulist', record);
-			socket.broadcast.emit('newUser', data);
+			
 		});
 
 	socket.on('nextQuestion', function()
@@ -112,14 +128,28 @@ io.sockets.on('connection', function(socket)
 			
 			
 		});
-	socket.on('disconn', function()
+
+	socket.on('disconnect', function()
 		{
+			for(var key in map)
+			{
+				if(map.hasOwnProperty(key))
+				{
+					if(socket.id == map[key])
+					{
+						record[key].onLine = false;
+						return;
+					}
+				}
+			}
+		});
+		
+	socket.on('disconn', function(data)
+		{
+			record[data].onLine = false;
+
 			socket.disconnect();
 		});
-//test util event
-	socket.on('sov',function(){
-			console.log("Tom");			
-			socket.broadcast.emit('newUser',"Tom");});
 });
 
 server.listen(1986);
